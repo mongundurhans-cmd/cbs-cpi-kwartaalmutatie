@@ -23,25 +23,24 @@ vorig_kwartaal <- function(verslagperiode) {
 
 #' Kwartaalmutatie (%) van de CPI voor één verslagperiode
 #'
-#' @param verslagperiode kwartaal in de vorm "JJJJKWn", bijv. "2025KW3"
+#' @param periode        de verslagperiode, een kwartaal in de vorm "JJJJKWn", bijv. "2025KW3"
 #' @param kwartaal       uitkomst van maak_kwartaalcijfers()
 #' @return één rij per product met CPI van het kwartaal, het vorige kwartaal
 #'         en de procentuele verandering
-bereken_kwartaalmutatie <- function(verslagperiode, kwartaal) {
+bereken_kwartaalmutatie <- function(periode, kwartaal) {
 
-  if (!grepl("^[0-9]{4}KW[1-4]$", verslagperiode)) {
+    if (!grepl("^[0-9]{4}KW[1-4]$", periode)) {
     stop("Verslagperiode moet de vorm 'JJJJKWn' hebben, bijv. '2025KW3'.",
          call. = FALSE)
   }
-  vorige <- vorig_kwartaal(verslagperiode)
-
+    vorige <- vorig_kwartaal(periode)
   huidig <- kwartaal %>% filter(verslagperiode == !!verslagperiode, volledig)
-  vorig  <- kwartaal %>% filter(verslagperiode == vorige, volledig) %>%
+      huidig <- kwartaal %>% filter(verslagperiode == periode, volledig)
     select(product_code, cpi_vorig = cpi_kwartaal)
 
   if (nrow(huidig) == 0 || nrow(vorig) == 0) {
     warning("Geen volledige data voor ", verslagperiode, " en/of ", vorige,
-            "; mutatie niet berekend.", call. = FALSE)
+        warning("Geen volledige data voor ", periode, " en/of ", vorige,
     return(NULL)
   }
 
@@ -65,7 +64,10 @@ bereken_alle_mutaties <- function(kwartaal) {
 #' middelingsmethode klopt met die van CBS zelf.
 controleer_jaargemiddelden <- function(maand, jaar, tolerantie = 0.01) {
   if (nrow(jaar) == 0) return(invisible(NULL))
-  vergelijk <- maand %>%
+    if (nrow(jaar) == 0) {
+    message("Controle overgeslagen: geen jaarcijfers beschikbaar.")
+    return(invisible(NULL))
+  }
     group_by(product_code, jaar) %>%
     summarise(eigen = mean(cpi), n = n(), .groups = "drop") %>%
     filter(n == 12) %>%
