@@ -25,11 +25,13 @@ Alle instellingen staan bovenaan `run_all.R`, waaronder de tabel, de productcode
 ## Structuur
 
 ```
-├── run_all.R            # startpunt: instellingen + aanroep van alle stappen
+├── run_all.R              # startpunt: instellingen + aanroep van alle stappen
 ├── R/
-│   ├── 01_input.R       # INPUT: data ophalen uit StatLine (cbsodataR)
-│   ├── 02_throughput.R  # THROUGHPUT: kwartaalcijfers, mutaties, controles
-│   └── 03_output.R      # OUTPUT: grafieken en SQLite
+│   ├── 01_input.R         # INPUT: data ophalen uit StatLine (cbsodataR)
+│   ├── 02_throughput.R    # THROUGHPUT: kwartaalcijfers, mutaties, controles
+│   └── 03_output.R        # OUTPUT: grafieken en SQLite
+├── tests/
+│   └── test_throughput.R  # tests voor de rekenfuncties
 └── output/
     ├── cpi_index.png
     ├── cpi_kwartaalmutatie.png
@@ -44,8 +46,7 @@ Input, throughput en output staan in aparte bestanden en communiceren alleen via
 
 **Throughput.**
 - `maak_kwartaalcijfers()`: de kwartaal-CPI is het gemiddelde van de drie maandindexcijfers. Kwartalen met minder dan drie maanden worden gemarkeerd als onvolledig en niet gebruikt.
-- `bereken_kwartaalmutatie(verslagperiode, kwartaal)`: de kernfunctie. Neem bijvoorbeeld verslagperiode `"2025KW3"`. De functie berekent dan de procentuele verandering ten opzichte van het vorige kwartaal: (CPI<sub>kw</sub> / CPI<sub>kw−1</sub> − 1) × 100. De jaargrens (KW1 t.o.v. KW4 van het vorige jaar) wordt correct afgehandeld en de invoer wordt gevalideerd.
-- `bereken_alle_mutaties()`: past dezelfde functie toe op alle beschikbare kwartalen.
+- `bereken_kwartaalmutatie(periode, kwartaal)`: de kernfunctie, met de verslagperiode als invoer. Neem bijvoorbeeld periode `"2025KW3"`. De functie berekent dan de procentuele verandering ten opzichte van het vorige kwartaal: (CPI<sub>kw</sub> / CPI<sub>kw−1</sub> − 1) × 100. De jaargrens (KW1 t.o.v. KW4 van het vorige jaar) wordt correct afgehandeld en de invoer wordt gevalideerd.
 - `controleer_jaargemiddelden()`: een plausibiliteitscontrole. Het gemiddelde van twaalf maanden wordt vergeleken met het jaarcijfer dat CBS zelf publiceert. De verschillen blijven binnen 0,01 indexpunt (afronding). Dat bevestigt dat de middelingsmethode overeenkomt met die van CBS.
 
 **Output.**
@@ -54,6 +55,14 @@ Input, throughput en output staan in aparte bestanden en communiceren alleen via
 - `cpi_kwartaal.sqlite`: de tabellen `cpi_maand`, `cpi_kwartaal`, `kwartaalmutatie` en `run_info` (tabel, producten, tijdstip van de run, R-versie). Bij elke run worden de tabellen vervangen, zodat de database altijd overeenkomt met de laatste run.
 
 Mutaties worden onafgerond opgeslagen. Afronding gebeurt alleen bij de presentatie.
+
+## Tests
+
+`tests/test_throughput.R` controleert de rekenfuncties op een klein voorbeeld waarvan de uitkomst vooraf bekend is: de jaargrens (KW1 t.o.v. KW4), het kwartaalgemiddelde, de kwartaalmutatie, het negeren van onvolledige kwartalen en het afwijzen van een verkeerd geformatteerde periode. Draai de tests vanuit de hoofdmap met:
+
+```r
+source("tests/test_throughput.R")
+```
 
 ## Uitkomsten in het kort
 
